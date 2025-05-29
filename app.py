@@ -31,7 +31,7 @@ designers_data = [
     },
     {
         "id": "3",
-        "name: "Creative Spaces",
+        "name": "Creative Spaces", # Corrected line: "name": "Creative Spaces"
         "description": "Innovative designs for modern living, specializing in minimalist aesthetics.",
         "projects": 30,
         "years": 5,
