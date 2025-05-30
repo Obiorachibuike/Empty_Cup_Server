@@ -1,11 +1,23 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from pymongo import MongoClient
+from bson.json_util import dumps
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-# Enable CORS for all routes, allowing the frontend to make requests from a different origin.
 CORS(app)
 
-# Dummy data for interior designers. In a real application, this would come from a database.
+# Connect to MongoDB using MONGO_URI from .env
+MONGO_URI = os.getenv("MONGO_URI")
+client = MongoClient(MONGO_URI)
+db = client['interior_design_db']
+designers_collection = db['designers']
+
+# Dummy data with rating field
 designers_data = [
     {
         "id": "1",
@@ -17,6 +29,7 @@ designers_data = [
         "phone1": "+91-984532853",
         "phone2": "+91-984532854",
         "shortlisted": False,
+        "rating": 3.5
     },
     {
         "id": "2",
@@ -28,10 +41,11 @@ designers_data = [
         "phone1": "+91-984532853",
         "phone2": "+91-984532854",
         "shortlisted": False,
+        "rating": 3.8
     },
     {
         "id": "3",
-        "name": "Creative Spaces", # Corrected line: "name": "Creative Spaces"
+        "name": "Creative Spaces",
         "description": "Innovative designs for modern living, specializing in minimalist aesthetics.",
         "projects": 30,
         "years": 5,
@@ -39,6 +53,7 @@ designers_data = [
         "phone1": "+91-987654321",
         "phone2": "+91-987654322",
         "shortlisted": False,
+        "rating": 5.0
     },
     {
         "id": "4",
@@ -50,26 +65,30 @@ designers_data = [
         "phone1": "+91-998877665",
         "phone2": "+91-998877666",
         "shortlisted": False,
+        "rating": 4.2
     },
 ]
+
+# Insert dummy data only if collection is empty
+if designers_collection.count_documents({}) == 0:
+    designers_collection.insert_many(designers_data)
+    print("Initial designer data inserted.")
 
 @app.route('/api/designers', methods=['GET'])
 def get_designers():
     """
-    API endpoint to retrieve a list of interior designers.
-    Returns the designers_data as a JSON array.
+    Retrieve all interior designers.
     """
-    return jsonify(designers_data)
+    designers_cursor = designers_collection.find()
+    designers_list = list(designers_cursor)
+    return dumps(designers_list), 200, {'Content-Type': 'application/json'}
 
 @app.route('/')
 def home():
     """
-    Basic home route for the API, just to confirm it's running.
+    Health check endpoint.
     """
     return "EmptyCup Backend API is running!"
 
 if __name__ == '__main__':
-    # Run the Flask app.
-    # In a production environment, you would use a production-ready WSGI server like Gunicorn.
-    # debug=True allows for automatic reloading on code changes and provides a debugger.
     app.run(debug=True, host='0.0.0.0', port=5000)
